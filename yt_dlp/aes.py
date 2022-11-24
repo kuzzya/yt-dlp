@@ -24,11 +24,27 @@ else:
         return intlist_to_bytes(aes_gcm_decrypt_and_verify(*map(bytes_to_intlist, (data, key, tag, nonce))))
 
 
+def aes_cbc_encrypt_bytes(data, key, iv, **kwargs):
+    return intlist_to_bytes(aes_cbc_encrypt(*map(bytes_to_intlist, (data, key, iv)), **kwargs))
+
+
+BLOCK_SIZE_BYTES = 16
+
+
 def unpad_pkcs7(data):
     return data[:-compat_ord(data[-1])]
 
 
-BLOCK_SIZE_BYTES = 16
+def pkcs7_padding(data):
+    """
+    PKCS#7 padding
+
+    @param {int[]} data        cleartext
+    @returns {int[]}           padding data
+    """
+
+    remaining_length = BLOCK_SIZE_BYTES - len(data) % BLOCK_SIZE_BYTES
+    return data + [remaining_length] * remaining_length
 
 
 def pad_block(block, padding_mode):
@@ -60,7 +76,7 @@ def pad_block(block, padding_mode):
 
 def aes_ecb_encrypt(data, key, iv=None):
     """
-    Encrypt with aes in ECB mode
+    Encrypt with aes in ECB mode. Using PKCS#7 padding
 
     @param {int[]} data        cleartext
     @param {int[]} key         16/24/32-Byte cipher key
@@ -73,8 +89,7 @@ def aes_ecb_encrypt(data, key, iv=None):
     encrypted_data = []
     for i in range(block_count):
         block = data[i * BLOCK_SIZE_BYTES: (i + 1) * BLOCK_SIZE_BYTES]
-        encrypted_data += aes_encrypt(block, expanded_key)
-    encrypted_data = encrypted_data[:len(data)]
+        encrypted_data += aes_encrypt(pkcs7_padding(block), expanded_key)
 
     return encrypted_data
 
@@ -164,7 +179,7 @@ def aes_cbc_decrypt(data, key, iv):
     return decrypted_data
 
 
-def aes_cbc_encrypt(data, key, iv, padding_mode='pkcs7'):
+def aes_cbc_encrypt(data, key, iv, *, padding_mode='pkcs7'):
     """
     Encrypt with aes in CBC mode
 
@@ -530,14 +545,23 @@ def ghash(subkey, data):
 
 
 __all__ = [
-    'aes_ctr_decrypt',
     'aes_cbc_decrypt',
     'aes_cbc_decrypt_bytes',
+    'aes_ctr_decrypt',
     'aes_decrypt_text',
-    'aes_encrypt',
+    'aes_decrypt',
+    'aes_ecb_decrypt',
     'aes_gcm_decrypt_and_verify',
     'aes_gcm_decrypt_and_verify_bytes',
+
+    'aes_cbc_encrypt',
+    'aes_cbc_encrypt_bytes',
+    'aes_ctr_encrypt',
+    'aes_ecb_encrypt',
+    'aes_encrypt',
+
     'key_expansion',
     'pad_block',
+    'pkcs7_padding',
     'unpad_pkcs7',
 ]

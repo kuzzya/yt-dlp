@@ -12,6 +12,7 @@ from ..utils import (
 
 class YouPornIE(InfoExtractor):
     _VALID_URL = r'https?://(?:www\.)?youporn\.com/(?:watch|embed)/(?P<id>\d+)(?:/(?P<display_id>[^/?#&]+))?'
+    _EMBED_REGEX = [r'<iframe[^>]+\bsrc=["\'](?P<url>(?:https?:)?//(?:www\.)?youporn\.com/embed/\d+)']
     _TESTS = [{
         'url': 'http://www.youporn.com/watch/505835/sex-ed-is-it-safe-to-masturbate-daily/',
         'md5': '3744d24c50438cf5b6f6d59feb5055c2',
@@ -65,12 +66,6 @@ class YouPornIE(InfoExtractor):
         'only_matching': True,
     }]
 
-    @staticmethod
-    def _extract_urls(webpage):
-        return re.findall(
-            r'<iframe[^>]+\bsrc=["\']((?:https?:)?//(?:www\.)?youporn\.com/embed/\d+)',
-            webpage)
-
     def _real_extract(self, url):
         mobj = self._match_valid_url(url)
         video_id = mobj.group('id')
@@ -108,7 +103,6 @@ class YouPornIE(InfoExtractor):
                 })
             f['height'] = height
             formats.append(f)
-        self._sort_formats(formats)
 
         webpage = self._download_webpage(
             'http://www.youporn.com/watch/%s' % video_id, display_id,
